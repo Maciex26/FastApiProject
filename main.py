@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse
 import cv2
 import numpy as np
 
@@ -39,4 +39,3 @@ async def invert(file: UploadFile):
     cv2.imwrite("inverted.jpg", inverted_image)
     return FileResponse("inverted.jpg")
     # return Response(content=inverted_image, media_type="image/jpg")
-
