@@ -9,6 +9,10 @@ async def root():
     return {"message": "Hello World"}
 
 
+@app.get("/monke")
+async def root():
+    return {"MONKE"}
+
 @app.get("/prime/{number}")
 async def prime(number: int):
     if 1 <= number <= 9223372036854775807:
