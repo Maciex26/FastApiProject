@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 import cv2
+import io
 import numpy as np
 
 app = FastAPI()
@@ -36,6 +37,7 @@ async def invert(file: UploadFile):
     # inverted_image = np.invert(nparray)
     img = cv2.imdecode(nparray, cv2.IMREAD_COLOR)
     inverted_image = cv2.bitwise_not(img)
-    cv2.imwrite("inverted.jpg", inverted_image)
-    return FileResponse("inverted.jpg")
-    # return Response(content=inverted_image, media_type="image/jpg")
+    # cv2.imwrite("inverted.jpg", inverted_image)
+    res, im_png = cv2.imencode(".png", inverted_image)
+    # return FileResponse("inverted.jpg")
+    return StreamingResponse(io.BytesIO(im_png.tobytes()), media_type="image/png")
