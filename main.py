@@ -1,23 +1,24 @@
 from fastapi import Depends, FastAPI, UploadFile, HTTPException, status
 from fastapi.responses import StreamingResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 import cv2
 import io
 import numpy as np
 import datetime
+import secrets
 
 fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
+    "user": {
+        "username": "user",
         "hashed_password": "fakehashedsecret",
         "disabled": False,
     }
 }
 
 app = FastAPI()
+
+security = HTTPBasic()
 
 
 def fake_hash_password(password: str):
@@ -62,6 +63,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
+def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
+    current_username_bytes = credentials.username.encode("utf8")
+    correct_username_bytes = b"stanleyjobson"
+    is_correct_username = secrets.compare_digest(
+        current_username_bytes, correct_username_bytes
+    )
+    current_password_bytes = credentials.password.encode("utf8")
+    correct_password_bytes = b"swordfish"
+    is_correct_password = secrets.compare_digest(
+        current_password_bytes, correct_password_bytes
+    )
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
+
+
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
@@ -71,11 +92,6 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-
-@app.get("/monke")
-async def root():
-    return {"MONKE"}
 
 
 @app.get("/prime/{number}")
@@ -116,3 +132,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     # return {"access_token": user.username, "token_type": "bearer"}
     return {datetime.datetime.now()}
+
+
+@app.get("/users/me")
+def read_current_user(username: str = Depends(get_current_username)):
+    return {"username": username}
