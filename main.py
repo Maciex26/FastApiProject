@@ -27,14 +27,9 @@ async def prime(number: int):
 async def invert(file: UploadFile):
     contents = await file.read()
     nparray = np.fromstring(contents, np.uint8)
-    # image = cv2.imread(contents, 0)
-    # inverted_image = cv2.bitwise_not(image)
-    # inverted_image = np.invert(nparray)
     img = cv2.imdecode(nparray, cv2.IMREAD_COLOR)
     inverted_image = cv2.bitwise_not(img)
-    # cv2.imwrite("inverted.jpg", inverted_image)
     res, im_png = cv2.imencode(".png", inverted_image)
-    # return FileResponse("inverted.jpg")
     return StreamingResponse(io.BytesIO(im_png.tobytes()), media_type="image/png")
 
 
